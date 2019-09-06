@@ -8,22 +8,28 @@ const char* ntpServer = "pool.ntp.org";
 #define GMT_OFFSET_SEC 28800L // Timezone +0800
 #define DAYLIGHT_OFFSET_SEC 0L // no daylight saving
 
+// WDT, enable auto restart from unexpected hang, it may caused by JPEG decode
+#define ENABLE_WDT
+
 // select preferred BiJinToKei here
 #include "URL.h"
 
 #include <time.h>
 #include <WiFi.h>
 #include <esp_jpg_decode.h>
+#include <esp_task_wdt.h>
 #include <SPI.h>
 #include <HTTPClient.h>
 
 /* display settings */
 #include <Arduino_HWSPI.h>
 #include <Arduino_GFX.h>    // Core graphics library by Adafruit
+#include "Arduino_ILI9341.h" // Hardware-specific library for ILI9341
 #include <Arduino_ST7789.h> // Hardware-specific library for ST7789 (with or without CS pin)
 Arduino_HWSPI *bus = new Arduino_HWSPI(16 /* DC */, 5 /* CS */, SCK, MOSI, MISO);
-Arduino_ST7789 *tft = new Arduino_ST7789(bus, 17 /* RST */, 1 /* rotation */, false /* IPS */);
-#define TFT_BL 22
+Arduino_ILI9341 *tft = new Arduino_ILI9341(bus, 17 /* RST */, TFT_ROTATION);
+// Arduino_ST7789 *tft = new Arduino_ST7789(bus, 17 /* RST */, TFT_ROTATION, false /* IPS */);
+// #define TFT_BL 22
 
 static int len, offset;
 static int8_t last_show_minute = -1;
@@ -39,6 +45,8 @@ void setup()
   tft->fillScreen(BLACK);
   // tft->setAddrWindow(40, 30, WIDTH, HEIGHT);
 
+Serial.println(SCK);
+Serial.println(MOSI);
   WiFi.begin(SSID_NAME, SSID_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
       delay(500);
@@ -59,7 +67,11 @@ void setup()
   digitalWrite(TFT_BL, HIGH);
 #endif
 
+#ifdef ENABLE_WDT
+  // set WDT timeout a little bit longer than HTTP timeout
+  esp_task_wdt_init((HTTPCLIENT_DEFAULT_TCP_TIMEOUT / 1000) + 1, true);
   enableLoopWDT();
+#endif
 }
 
 void loop()
@@ -95,6 +107,7 @@ void loop()
     {
       if (httpCode != HTTP_CODE_OK) {
         Serial.printf("[HTTP] Not OK!\n");
+        delay(5000);
       } else {
         // get lenght of document (is -1 when Server sends no Content-Length header)
         len = http.getSize();
@@ -109,10 +122,15 @@ void loop()
           esp_jpg_decode(len, JPG_SCALE, http_stream_reader, tft_writer, http_stream /* arg */);
         }
       }
+      last_show_minute = timeinfo.tm_min;
     }
     http.end();
-    last_show_minute = timeinfo.tm_min;
   }
+
+#ifdef ENABLE_WDT
+  // notify WDT still working
+  feedLoopWDT();
+#endif
 }
 
 static size_t http_stream_reader(void *arg, size_t index, uint8_t *buf, size_t len)
@@ -153,7 +171,10 @@ static bool tft_writer(void *arg, uint16_t x, uint16_t y, uint16_t w, uint16_t h
     tft->endWrite();
   }
 
+#ifdef ENABLE_WDT
   // notify WDT still working
   feedLoopWDT();
+#endif
+
   return true; // Continue to decompression
 }
