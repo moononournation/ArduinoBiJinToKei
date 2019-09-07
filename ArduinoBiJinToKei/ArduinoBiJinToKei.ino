@@ -26,10 +26,10 @@ const char* ntpServer = "pool.ntp.org";
 #include <Arduino_GFX.h>    // Core graphics library by Adafruit
 #include "Arduino_ILI9341.h" // Hardware-specific library for ILI9341
 #include <Arduino_ST7789.h> // Hardware-specific library for ST7789 (with or without CS pin)
-Arduino_HWSPI *bus = new Arduino_HWSPI(16 /* DC */, 5 /* CS */, SCK, MOSI, MISO);
+Arduino_HWSPI *bus = new Arduino_HWSPI(16 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, -1 /* MISO */);
 Arduino_ILI9341 *tft = new Arduino_ILI9341(bus, 17 /* RST */, TFT_ROTATION);
 // Arduino_ST7789 *tft = new Arduino_ST7789(bus, 17 /* RST */, TFT_ROTATION, false /* IPS */);
-// #define TFT_BL 22
+#define TFT_BL 22
 
 static int len, offset;
 static int8_t last_show_minute = -1;
