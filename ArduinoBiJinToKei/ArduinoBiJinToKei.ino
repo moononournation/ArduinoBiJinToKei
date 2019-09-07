@@ -45,8 +45,6 @@ void setup()
   tft->fillScreen(BLACK);
   // tft->setAddrWindow(40, 30, WIDTH, HEIGHT);
 
-Serial.println(SCK);
-Serial.println(MOSI);
   WiFi.begin(SSID_NAME, SSID_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
       delay(500);
