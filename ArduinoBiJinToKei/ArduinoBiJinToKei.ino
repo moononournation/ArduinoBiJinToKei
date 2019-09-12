@@ -25,9 +25,12 @@ const char* ntpServer = "pool.ntp.org";
 #include <Arduino_HWSPI.h>
 #include <Arduino_GFX.h>    // Core graphics library by Adafruit
 #include <Arduino_ILI9341.h> // Hardware-specific library for ILI9341
-// #include <Arduino_ST7789.h> // Hardware-specific library for ST7789 (with or without CS pin)
+#include <Arduino_ILI9486.h> // Hardware-specific library for ILI9486
+#include <Arduino_ST7789.h> // Hardware-specific library for ST7789 (with or without CS pin)
+
 Arduino_HWSPI *bus = new Arduino_HWSPI(16 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, -1 /* MISO */);
 Arduino_ILI9341 *tft = new Arduino_ILI9341(bus, 17 /* RST */, TFT_ROTATION);
+// Arduino_ILI9486 *tft = new Arduino_ILI9486(bus, 17 /* RST */, TFT_ROTATION);
 // Arduino_ST7789 *tft = new Arduino_ST7789(bus, 17 /* RST */, TFT_ROTATION, false /* IPS */);
 #define TFT_BL 22
 
@@ -157,16 +160,7 @@ static bool tft_writer(void *arg, uint16_t x, uint16_t y, uint16_t w, uint16_t h
   if (data)
   {
     // Serial.printf("%d, %d, %d, %d\n", x, y, w, h);
-    tft->startWrite();
-    tft->writeAddrWindow(x, y, w, h);
-    for (int i = 0; i < h; i++)
-    {
-      for (int j = 0; j < w; j++)
-      {
-        tft->writeColor(tft->color565(*(data++), *(data++), *(data++)));
-      }
-    }
-    tft->endWrite();
+    tft->draw24bitRGBBitmap(x, y, data, w, h);
   }
 
 #ifdef ENABLE_WDT

@@ -66,7 +66,7 @@
 // #define URL "http://www.bijint.com/assets/toppict/kids-fo/t1/%02d%02d.jpg"
 
 /* local cached web server (scale downed to 320x240) */
-//  #define JPG_SCALE JPG_SCALE_NONE
+// #define JPG_SCALE JPG_SCALE_NONE
 // #define TFT_ROTATION 1 // landscape
 // #define URL "http://192.168.123.173/assets/pict/circuit/320/%02d%02d.jpg"
 // #define URL "http://192.168.123.173/assets/pict/kids-fo/320/%02d%02d.jpg"
