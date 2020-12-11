@@ -22,7 +22,7 @@ const char *ntpServer = "pool.ntp.org";
 #include <HTTPClient.h>
 
 /* display settings */
-#include "Arduino_GFX_Library.h" // Core graphics library
+#include <Arduino_GFX_Library.h>
 Arduino_HWSPI *bus = new Arduino_HWSPI(16 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, -1 /* MISO */);
 // Arduino_DataBus *bus = new Arduino_ESP32SPI(27 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, 19 /* MISO */);
 // Arduino_DataBus *bus = new Arduino_ESP32SPI(-1 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, -1 /* MISO */);
