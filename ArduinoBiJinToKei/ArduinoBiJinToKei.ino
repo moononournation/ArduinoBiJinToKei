@@ -1,11 +1,11 @@
 /* WiFi settings */
 #define SSID_NAME "YourAP"
-#define SSID_PASSWORD "YourPassword"
+#define SSID_PASSWORD "PleaseInputYourPasswordHere"
 
 /* NTP server settings */
-const char* ntpServer = "pool.ntp.org";
+const char *ntpServer = "pool.ntp.org";
 // const char* ntpServer = "192.168.123.1"; // local AP NTP server
-#define GMT_OFFSET_SEC 28800L // Timezone +0800
+#define GMT_OFFSET_SEC 28800L  // Timezone +0800
 #define DAYLIGHT_OFFSET_SEC 0L // no daylight saving
 
 // WDT, enable auto restart from unexpected hang, it may caused by JPEG decode
@@ -22,16 +22,17 @@ const char* ntpServer = "pool.ntp.org";
 #include <HTTPClient.h>
 
 /* display settings */
-#include <Arduino_HWSPI.h>
-#include <Arduino_GFX.h>    // Core graphics library by Adafruit
-#include <Arduino_ILI9341.h> // Hardware-specific library for ILI9341
-#include <Arduino_ILI9486.h> // Hardware-specific library for ILI9486
-#include <Arduino_ST7789.h> // Hardware-specific library for ST7789 (with or without CS pin)
-
+#include "Arduino_GFX_Library.h" // Core graphics library
 Arduino_HWSPI *bus = new Arduino_HWSPI(16 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, -1 /* MISO */);
+// Arduino_DataBus *bus = new Arduino_ESP32SPI(27 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, 19 /* MISO */);
+// Arduino_DataBus *bus = new Arduino_ESP32SPI(-1 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, -1 /* MISO */);
+// Arduino_HX8347C *tft = new Arduino_HX8347C(bus, 17, TFT_ROTATION, true /* IPS */);
+// Arduino_HX8357B *tft = new Arduino_HX8357B(bus, 17, TFT_ROTATION, true /* IPS */);
 Arduino_ILI9341 *tft = new Arduino_ILI9341(bus, 17 /* RST */, TFT_ROTATION);
+// Arduino_ILI9481 *tft = new Arduino_ILI9481(bus, 33 /* RST */, TFT_ROTATION);
 // Arduino_ILI9486 *tft = new Arduino_ILI9486(bus, 17 /* RST */, TFT_ROTATION);
-// Arduino_ST7789 *tft = new Arduino_ST7789(bus, 17 /* RST */, TFT_ROTATION, false /* IPS */);
+// Arduino_ST7789 *tft = new Arduino_ST7789(bus, 33 /* RST */, TFT_ROTATION, true /* IPS */);
+// Arduino_ST7796 *tft = new Arduino_ST7796(bus, 33 /* RST */, TFT_ROTATION, false /* IPS */);
 #define TFT_BL 22
 
 static int len, offset;
@@ -49,15 +50,17 @@ void setup()
   // tft->setAddrWindow(40, 30, WIDTH, HEIGHT);
 
   WiFi.begin(SSID_NAME, SSID_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      Serial.print(".");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
   }
   Serial.println(" CONNECTED");
 
   configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, ntpServer);
 
-  if(!getLocalTime(&timeinfo)){
+  if (!getLocalTime(&timeinfo))
+  {
     Serial.println("Failed to obtain time");
     return;
   }
@@ -106,17 +109,23 @@ void loop()
     }
     else
     {
-      if (httpCode != HTTP_CODE_OK) {
+      if (httpCode != HTTP_CODE_OK)
+      {
         Serial.printf("[HTTP] Not OK!\n");
         delay(5000);
-      } else {
+      }
+      else
+      {
         // get lenght of document (is -1 when Server sends no Content-Length header)
         len = http.getSize();
         Serial.printf("[HTTP] size: %d\n", len);
 
-        if (len <= 0) {
+        if (len <= 0)
+        {
           Serial.printf("[HTTP] Unknow content size: %d\n", len);
-        } else {
+        }
+        else
+        {
           // get tcp stream
           WiFiClient *http_stream = http.getStreamPtr();
 
@@ -136,19 +145,24 @@ void loop()
 
 static size_t http_stream_reader(void *arg, size_t index, uint8_t *buf, size_t len)
 {
-  WiFiClient *http_stream = (WiFiClient*)arg;
-  if (buf) {
+  WiFiClient *http_stream = (WiFiClient *)arg;
+  if (buf)
+  {
     // Serial.printf("[HTTP] read: %d\n", len);
     size_t a = http_stream->available();
     size_t r = 0;
-    while (r < len) {
+    while (r < len)
+    {
       r += http_stream->readBytes(buf + r, min((len - r), a));
     }
     return r;
-  } else {
+  }
+  else
+  {
     // Serial.printf("[HTTP] skip: %d\n", len);
     int l = len;
-    while (l--) {
+    while (l--)
+    {
       http_stream->read();
     }
     return len;
