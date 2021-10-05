@@ -23,17 +23,15 @@ const char *ntpServer = "pool.ntp.org";
 
 /* display settings */
 #include <Arduino_GFX_Library.h>
-Arduino_HWSPI *bus = new Arduino_HWSPI(16 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, -1 /* MISO */);
-// Arduino_DataBus *bus = new Arduino_ESP32SPI(27 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, 19 /* MISO */);
-// Arduino_DataBus *bus = new Arduino_ESP32SPI(-1 /* DC */, 5 /* CS */, 18 /* SCK */, 23 /* MOSI */, -1 /* MISO */);
-// Arduino_HX8347C *tft = new Arduino_HX8347C(bus, 17, TFT_ROTATION, true /* IPS */);
-// Arduino_HX8357B *tft = new Arduino_HX8357B(bus, 17, TFT_ROTATION, true /* IPS */);
-Arduino_ILI9341 *tft = new Arduino_ILI9341(bus, 17 /* RST */, TFT_ROTATION);
-// Arduino_ILI9481 *tft = new Arduino_ILI9481(bus, 33 /* RST */, TFT_ROTATION);
-// Arduino_ILI9486 *tft = new Arduino_ILI9486(bus, 17 /* RST */, TFT_ROTATION);
-// Arduino_ST7789 *tft = new Arduino_ST7789(bus, 33 /* RST */, TFT_ROTATION, true /* IPS */);
-// Arduino_ST7796 *tft = new Arduino_ST7796(bus, 33 /* RST */, TFT_ROTATION, false /* IPS */);
-#define TFT_BL 22
+
+/* More data bus class: https://github.com/moononournation/Arduino_GFX/wiki/Data-Bus-Class */
+Arduino_DataBus *bus = create_default_Arduino_DataBus();
+
+/* More display class: https://github.com/moononournation/Arduino_GFX/wiki/Display-Class */
+Arduino_GFX *gfx = new Arduino_ILI9341(bus, TFT_RST, 1 /* rotation */, false /* IPS */);
+
+// Uncomment to customize backlight pin
+// #define TFT_BL 22
 
 static int len, offset;
 static int8_t last_show_minute = -1;
@@ -45,10 +43,11 @@ HTTPClient http;
 void setup()
 {
   Serial.begin(115200);
-  tft->begin();
-  tft->fillScreen(BLACK);
-  // tft->setAddrWindow(40, 30, WIDTH, HEIGHT);
+  gfx->begin();
+  gfx->fillScreen(BLACK);
+  // gfx->setAddrWindow(40, 30, WIDTH, HEIGHT);
 
+  Serial.println("Connecting WiFi .");
   WiFi.begin(SSID_NAME, SSID_PASSWORD);
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -59,10 +58,11 @@ void setup()
 
   configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, ntpServer);
 
-  if (!getLocalTime(&timeinfo))
+  Serial.println("Obtaining time .");
+  while (!getLocalTime(&timeinfo))
   {
-    Serial.println("Failed to obtain time");
-    return;
+    delay(500);
+    Serial.print(".");
   }
   Serial.println(&timeinfo, "NTP time: %A, %B %d %Y %H:%M:%S");
 
@@ -174,7 +174,7 @@ static bool tft_writer(void *arg, uint16_t x, uint16_t y, uint16_t w, uint16_t h
   if (data)
   {
     // Serial.printf("%d, %d, %d, %d\n", x, y, w, h);
-    tft->draw24bitRGBBitmap(x, y, data, w, h);
+    gfx->draw24bitRGBBitmap(x, y, data, w, h);
   }
 
 #ifdef ENABLE_WDT
